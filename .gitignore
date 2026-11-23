@@ -1,0 +1,6 @@
+# Antora output and cache
+build/
+.cache/
+
+# npm
+node_modules/
