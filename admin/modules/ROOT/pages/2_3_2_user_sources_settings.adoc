@@ -163,7 +163,7 @@ And also use groups to control the order of evaluation:
 
 ====
 
-* *US_IMAP_HOST_FIELDNAME*: *WARNING: this setting overrides the configuration done in the Mail Settings!* #TODO: add links when it's done.# +
+* *US_IMAP_HOST_FIELDNAME*: *WARNING: this setting overrides the configuration done in the xref:2_3_4_mail_settings.adoc#_imap[Mail Settings]!* +
 The field/column where the user's IMAP hostname can be found.
 
 [WARNING]

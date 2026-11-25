@@ -1,0 +1,68 @@
+= SOGo 6 - Calendar and Address Book Settings (Domain Settings)
+
+Here you set up what users can do with their calendars and address books, apart from sharing and export, which are set in the User Module Settings
+(`SOGO_D_FOLDER_DISABLE_SHARING`, `SOGO_D_FOLDER_DISABLE_EXPORT`...).
+
+== CalDAV and CardDAV
+
+(NOT IMPLEMENTED)
+
+CalDAV and CardDAV are the standard protocols used by calendar and contact clients (Thunderbird, the macOS and iOS apps, DAVx⁵ on Android...)
+to sync with a server. SOGo 6 does not serve them yet: these settings have no effect for now.
+
+[NOTE]
+====
+This is not the same as adding a remote CalDAV calendar in SOGo (a calendar hosted on another server, that SOGo reads), which does not depend on these settings.
+====
+
+* *SOGO_D_CALDAV_ENABLED* (NOT IMPLEMENTED): boolean, defaults to True. Allow users to access their calendars with a CalDAV client.
+
+The two following settings are only used if `SOGO_D_CALDAV_ENABLED` is True:
+
+* *SOGO_D_CALDAV_PUBLIC_ACCESS_ENABLE* (NOT IMPLEMENTED): boolean, defaults to False. Allow public (unauthenticated) CalDAV access to the calendars users have made public.
+* *SOGO_D_CALDAV_START_TIME* (NOT IMPLEMENTED): integer, defaults to 0. Limit the events returned to CalDAV clients to the last `SOGO_D_CALDAV_START_TIME` days.
+0 means no limit.
+
+[NOTE]
+====
+E.g. with `SOGO_D_CALDAV_START_TIME = 180`, a CalDAV client only syncs the events of the last 180 days (and the future ones). It makes the first sync of
+large calendars faster on phones.
+====
+
+* *SOGO_D_CARDAV_ENABLED* (NOT IMPLEMENTED): boolean, defaults to True. Allow users to access their address books with a CardDAV client.
+* *SOGO_D_CARDAV_PUBLIC_ACCESS_ENABLE* (NOT IMPLEMENTED): boolean, defaults to False. Only used if `SOGO_D_CARDAV_ENABLED` is True.
+Allow public (unauthenticated) CardDAV access to the address books users have made public.
+
+== Public calendar links
+
+* *SOGO_D_CALENDAR_PUBLIC_LINK_ENABLED*: boolean, defaults to True. Allow users to publish a calendar through a public link: a secret URL to an `.ics` file
+that anyone with the link can subscribe to, without logging in (e.g. to show a calendar in another calendar application or on a website).
+
+[IMPORTANT]
+====
+When you set this setting to False:
+
+* Users can no longer publish a calendar.
+* The links already published stop working (they return "not found").
+* The links are kept: if you set the setting back to True, the existing links work again, with the same URLs.
+
+Users can always unpublish a calendar, whatever this setting.
+====
+
+== Video conference
+
+SOGo can insert a link to a Jitsi Meet video conference room. For now, the button is available when writing a mail.
+
+* *SOGO_D_JITSI_LINK_ENABLED*: boolean, defaults to True. Show the button that inserts a Jitsi link.
+* *SOGO_D_JITSI_BASE_URL*: a URL, defaults to `https://meet.jit.si`. Only used if `SOGO_D_JITSI_LINK_ENABLED` is True. The URL of your Jitsi Meet server.
+SOGo adds a random room name after it, e.g. `https://meet.jit.si/a1b2c3d4`.
+
+[NOTE]
+====
+`https://meet.jit.si` is the public Jitsi service. If you host your own Jitsi Meet server, set its URL here.
+====
+
+== Reminders
+
+* *SOGO_D_REMINDER_ALLOW_MAIL* (NOT IMPLEMENTED): boolean, defaults to True. Allow users to receive their event and task reminders by mail.
+For now, reminders by mail are sent whatever this setting. See the warning about SOGo's own mails in the Mail Settings (outgoing mail server).

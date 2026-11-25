@@ -1,0 +1,213 @@
+= SOGo 6 - Mail Settings (Domain Settings)
+
+Here you set up the three servers SOGo talks to for mails, and what users can do with them:
+
+* The *mail server*, where the mails are stored and read (IMAP: Dovecot, Cyrus...).
+* The *filtering server*, where the users' filters, vacation messages and forwards are stored (Sieve).
+* The *outgoing mail server*, used to send mails (SMTP: Postfix...).
+
+[WARNING]
+====
+SOGo 6 only connects to these servers. It does not create the mailboxes, the domains or the users on them: this is done on your side.
+See the domain settings introduction.
+====
+
+[NOTE]
+====
+By default, SOGo logs in to the three servers with the user's uid and password. If your servers expect another login, see the User Sources settings
+`US_MAIL_SERVER_LOGIN`, `US_MAIL_FILTERING_LOGIN` and `US_MAIL_OUTGOING_LOGIN`.
+====
+
+== Connection settings
+
+Several settings below set how SOGo connects to a server. They work the same for the three servers:
+
+* *Encryption*: a string, one of (mind the case):
+** `None`: plain (unencrypted) communication
+** `SSL/TLS`: encrypted communication from the start (implicit TLS), usually on ports 993 (IMAP) and 465 (SMTP)
+** `StartTLS`: starts in plain mode, then negotiates an encrypted communication with the STARTTLS command, usually on ports 143 (IMAP), 4190 (Sieve) and 587 (SMTP)
+* *Authentication mechanism*: how the credentials are sent. The values allowed differ by server, see each server below.
+
+[CAUTION]
+====
+With `None`, passwords are sent unencrypted. Only use it when SOGo and the server talk over a private network you trust.
+====
+
+== Mail server
+
+* *SOGO_D_MAIL_SERVER_TYPE*: a string, defaults to `imap`. The kind of mail server. Only `imap` for now.
+
+=== IMAP
+
+* *SOGO_D_IMAP_SERVER*: a string, the hostname or IP of your IMAP server.
+* *SOGO_D_IMAP_PORT*: integer between 1 and 65535, defaults to 143.
+* *SOGO_D_IMAP_ENCRYPTION*: defaults to `None`. See <<Connection settings>>.
+* *SOGO_D_IMAP_AUTH_MECH*: a string, defaults to `login`. One of:
+** `login`: the IMAP `LOGIN` command, supported by every IMAP server
+** `plain`: SASL `AUTHENTICATE PLAIN`
+** `xoauth2`: SASL `AUTHENTICATE XOAUTH2`, for OAuth2 tokens
+
+[WARNING]
+====
+These settings can be overridden per user with the User Source setting `US_IMAP_HOST_FIELDNAME`. Only use it if you are migrating from SOGo 5 and already relied on it.
+====
+
+=== Special folders
+
+The names of the IMAP folders SOGo uses for specific purposes. They must match the folder names on your IMAP server.
+Users can choose other folders for these purposes in their own settings, which take precedence over these values.
+
+* *SOGO_D_MAIL_INBOX*: a string, defaults to `INBOX`. The inbox. Users cannot change it.
+* *SOGO_D_MAIL_SENT*: a string, defaults to `Sent`. Where sent mails are saved.
+* *SOGO_D_MAIL_DRAFT*: a string, defaults to `Drafts`. Where drafts are saved.
+* *SOGO_D_MAIL_TRASH*: a string, defaults to `Trash`. Where deleted mails are moved.
+* *SOGO_D_MAIL_JUNK*: a string, defaults to `Junk`. The junk (spam) folder.
+* *SOGO_D_MAIL_TEMPLATE*: a string, defaults to `Templates`. The mail templates folder.
+
+[NOTE]
+====
+With Dovecot, the folder names are often defined in the `namespace inbox` section, with the `special_use` flags. Use the same names here.
+====
+
+=== Mailbox
+
+* *SOGO_D_SOFT_EMAIL_QUOTA*: integer between 1 and 10000, defaults to 10000. Shows users a lower quota than the real one, as a fraction of 10000:
+10000 = 100% of the real quota, 9000 = 90%, 1 = 0.01%.
+
+[NOTE]
+====
+The quota itself is set on your IMAP server. This setting only changes the quota gauge shown to users, so that they see their mailbox as full before it really is
+and have time to clean it. SOGo does not block anything.
+
+E.g. a user has a 10 GB quota on the IMAP server. With `SOGO_D_SOFT_EMAIL_QUOTA = 9000`, SOGo shows a 9 GB quota.
+====
+
+* *SOGO_D_MAIL_PURGE_ALLOW* *(UI only)*: boolean, defaults to True. Allow users to purge a folder, meaning delete all the mails older than a date.
+If False, the "Purge" action is hidden from the folder menu.
+* *SOGO_D_MAIL_PURGE_MIN_DATE* (NOT IMPLEMENTED): integer, defaults to 0. Minimum age, in days, of the mails a user can purge. 0 means users can purge everything.
+* *SOGO_D_MAIL_DRAFT_AUTOSAVE*: integer greater than or equal to 5, defaults to 5. While a user writes a mail, the draft is saved every `SOGO_D_MAIL_DRAFT_AUTOSAVE` seconds.
+
+[NOTE]
+====
+*(UI only)* means the SOGo 6 web interface hides the action, but the API itself does not refuse it.
+====
+
+== Filtering server
+
+The filtering server stores the users' rules: filters, vacation (auto-reply), forward and notifications. They are applied by your mail server when a mail arrives,
+even if the user is not logged in to SOGo.
+
+* *SOGO_D_MAIL_FILTERING_ENABLED*: boolean, defaults to True. Enable the filtering features. If False, SOGo does not connect to the filtering server and refuses
+every filtering request (filters, vacation, forward and notifications), whatever the settings below.
+* *SOGO_D_MAIL_FILTERING_TYPE*: a string, defaults to `sieve`. Only used if `SOGO_D_MAIL_FILTERING_ENABLED` is True. The kind of filtering server. Only `sieve` for now.
+
+=== Sieve
+
+The following settings are only used if `SOGO_D_MAIL_FILTERING_TYPE` is `sieve`. SOGo uses the ManageSieve protocol (https://www.rfc-editor.org/rfc/rfc5804[RFC 5804]).
+
+* *SOGO_D_SIEVE_SERVER*: a string, the hostname or IP of your ManageSieve server.
+* *SOGO_D_SIEVE_PORT*: integer between 1 and 65535, defaults to 4190.
+* *SOGO_D_SIEVE_ENCRYPTION*: defaults to `None`. See <<Connection settings>>.
+* *SOGO_D_SIEVE_AUTH_MECH*: a string, defaults to `None`. One of:
+** `None`: the mechanism offered by the server is used
+** `plain`: SASL `PLAIN`
+** `xoauth2`: SASL `XOAUTH2`, for OAuth2 tokens
+* *SOGO_D_SIEVE_FOLDER_ENCODING* (NOT IMPLEMENTED): a string, `utf-7` or `utf-8`, defaults to `utf-7`. The encoding of the folder names written in Sieve scripts
+(e.g. in a "move to folder" filter). It must match what your mail server expects.
+
+Scripts set by the admin (NOT IMPLEMENTED):
+
+* *SOGO_D_SIEVE_HEADER* (NOT IMPLEMENTED): a string, a Sieve script added at the top of every user's script.
+* *SOGO_D_SIEVE_FOOTER* (NOT IMPLEMENTED): a string, a Sieve script added at the bottom of every user's script.
+* *SOGO_D_SIEVE_FIRST_FILTER* (NOT IMPLEMENTED): a string, a Sieve script set for new users.
+
+=== Vacation
+
+* *SOGO_D_VACATION_ENABLED*: boolean, defaults to True. Allow users to set a vacation message (auto-reply).
+* *SOGO_D_VACATION_ALLOW_RESPONSE_ALWAYS*: boolean, defaults to False. Allow users to set the delay between two auto-replies to the same sender to 0 days,
+meaning every mail gets an auto-reply.
+
+[CAUTION]
+====
+With a 0-day delay, two auto-replying mailboxes can answer each other endlessly. Keep this setting False unless you have a reason.
+====
+
+=== Forward
+
+* *SOGO_D_FORWARD_ENABLED*: boolean, defaults to True. Allow users to forward their incoming mails to other addresses.
+
+[WARNING]
+====
+SOGo does not restrict forward addresses yet: a user can forward to any address, including external ones. If this is a concern (data leaks),
+restrict it on your outgoing mail server, or disable the feature.
+====
+
+The following settings are only used if `SOGO_D_FORWARD_ENABLED` is True (NOT IMPLEMENTED):
+
+* *SOGO_D_FORWARD_ALLOW_USER_DOMAIN* (NOT IMPLEMENTED): boolean, defaults to True. Allow forwards to addresses of the user's own domain.
+* *SOGO_D_FORWARD_ALLOW_SOGO_DOMAIN* (NOT IMPLEMENTED): boolean, defaults to True. Allow forwards to addresses of the other domains of this SOGo.
+* *SOGO_D_FORWARD_ALLOW_EXT_DOMAIN* (NOT IMPLEMENTED): boolean, defaults to True. Allow forwards to external addresses.
+* *SOGO_D_FORWARD_WHITELIST* (NOT IMPLEMENTED): a list of strings. Addresses allowed as forward targets.
+* *SOGO_D_FORWARD_BLACKLIST* (NOT IMPLEMENTED): a list of strings. Addresses forbidden as forward targets.
+
+=== Notifications
+
+* *SOGO_D_NOTIFY_ENABLED*: boolean, defaults to True. Allow users to be notified at another address when they receive a mail.
+
+The following settings are only used if `SOGO_D_NOTIFY_ENABLED` is True. They work like the forward ones (NOT IMPLEMENTED):
+
+* *SOGO_D_NOTIFY_ALLOW_USER_DOMAIN* (NOT IMPLEMENTED): boolean, defaults to True.
+* *SOGO_D_NOTIFY_ALLOW_SOGO_DOMAIN* (NOT IMPLEMENTED): boolean, defaults to True.
+* *SOGO_D_NOTIFY_ALLOW_EXT_DOMAIN* (NOT IMPLEMENTED): boolean, defaults to True.
+* *SOGO_D_NOTIFY_WHITELIST* (NOT IMPLEMENTED): a list of strings.
+* *SOGO_D_NOTIFY_BLACKLIST* (NOT IMPLEMENTED): a list of strings.
+
+== Outgoing mail server
+
+* *SOGO_D_MAIL_OUTGOING_TYPE*: a string, defaults to `smtp`. One of:
+** `smtp`: SOGo sends mails through an SMTP server
+** `sendmail` (NOT IMPLEMENTED): SOGo sends mails with the sendmail binary, see `SOGO_S_SENDMAIL` in the xref:2_2_system_settings.adoc[System Settings]
+
+=== SMTP
+
+* *SOGO_D_SMTP_SERVER*: a string, the hostname or IP of your SMTP server.
+* *SOGO_D_SMTP_PORT*: integer between 1 and 65535, defaults to 587.
+* *SOGO_D_SMTP_ENCRYPTION*: defaults to `None`. See <<Connection settings>>.
+* *SOGO_D_SMTP_AUTH_MECH*: a string, defaults to `None`. One of:
+** `None`: SOGo sends mails without authenticating. Your SMTP server must accept mails from SOGo's IP.
+** `plain`: SASL `PLAIN`, with the user's credentials
+** `xoauth2`: SASL `XOAUTH2`, for OAuth2 tokens
+** `oauthbearer`: SASL `OAUTHBEARER`, for OAuth2 tokens
+
+[WARNING]
+====
+SOGo itself also sends mails, e.g. the calendar reminders sent by mail. They are sent in the background, where SOGo does not know the user's password,
+and the system account below is not implemented yet. For now, these mails are only delivered when `SOGO_D_SMTP_AUTH_MECH` is `None`
+and your SMTP server accepts mails from SOGo's IP without authentication.
+====
+
+==== System account
+
+(NOT IMPLEMENTED)
+
+An SMTP account SOGo will use to send its own mails (reminders, notifications, password recovery) instead of the user's credentials.
+
+* *SOGO_D_SMTP_MASTER_ENABLED* (NOT IMPLEMENTED): boolean, defaults to False. Use the account below for SOGo's own mails.
+* *SOGO_D_SMTP_MASTER_LOGIN* (NOT IMPLEMENTED): a string, the login of this account. Only used if `SOGO_D_SMTP_MASTER_ENABLED` is True.
+* *SOGO_D_SMTP_MASTER_PWD* (NOT IMPLEMENTED): a string, its password. Only used if `SOGO_D_SMTP_MASTER_ENABLED` is True. Stored encrypted, never shown back.
+* *SOGO_D_SMTP_MASTER_FROM* (NOT IMPLEMENTED): a mail address, the "From" of SOGo's own mails.
+
+=== Sending limits
+
+These limits are normally enforced by your SMTP server. Setting the same values in SOGo lets users get a clear message before the mail is sent.
+
+* *SOGO_D_MAIL_MAX_RECIPIENT*: integer, defaults to 0. Maximum number of recipients (To + Cc + Bcc) of a mail. 0 means no limit.
+The web interface stops adding recipients at the limit, and SOGo refuses to send a mail above it.
+
+You will be able to block users who send too many mails: if a user sends more than A mails during B seconds, they cannot send any mail for C seconds.
+
+* *SOGO_D_MAIL_MAX_SUBMISSION* (NOT IMPLEMENTED): integer, defaults to 0. Maximum number of mails (A). 0 means no limit.
+* *SOGO_D_MAIL_MAX_SUBMISSION_INTERVAL* (NOT IMPLEMENTED): integer greater than or equal to 10, defaults to 30. The time span (B), in seconds.
+* *SOGO_D_MAIL_MAX_SUBMISSION_BLOCK_INTERVAL* (NOT IMPLEMENTED): integer greater than or equal to 5, defaults to 300. How long the user is blocked (C), in seconds.
+
+* *SOGO_D_MAIL_CHECK_FROM* (NOT IMPLEMENTED): boolean, defaults to False. Check that the "From" of a mail is one of the user's addresses (main mail, aliases, identities).

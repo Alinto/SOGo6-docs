@@ -12,4 +12,7 @@
 ** xref:2_3_0_domain_settings.adoc[]
 *** xref:2_3_1_auth_settings.adoc[]
 *** xref:2_3_2_user_sources_settings.adoc[]
+*** xref:2_3_3_user_module_settings.adoc[]
+*** xref:2_3_4_mail_settings.adoc[]
+*** xref:2_3_5_calendar_contact_settings.adoc[]
 

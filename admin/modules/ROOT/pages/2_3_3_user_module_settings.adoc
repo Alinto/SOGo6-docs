@@ -1,0 +1,122 @@
+= SOGo 6 - User Module Settings (Domain Settings)
+
+Here you set up what a user can access and do in SOGo: which modules they see, whether they can share or export their folders,
+use identities, add external mail accounts...
+
+As for all domain settings, set the default domain settings first, then override some of them for specific domains if needed.
+
+[NOTE]
+====
+Some settings below are only enforced by the SOGo 6 web interface: they hide a menu or a button, but the API itself does not refuse the action.
+They are flagged with *(UI only)*. Keep that in mind if your users can reach the API with another client.
+====
+
+== Modules
+
+* *SOGO_D_MODULE_ACCESS* *(UI only)*: a list of strings, defaults to `['mail', 'calendar', 'contact']`. The modules users can access. Each value is one of:
+** `mail`
+** `calendar`
+** `contact`
+
+[NOTE]
+====
+A module that is not in the list is hidden from the sidebar and from the "create" shortcuts. E.g. `['mail', 'contact']` gives users a webmail with contacts but no calendar.
+====
+
+* *SOGO_D_EAS_ACCESS* (NOT IMPLEMENTED): boolean, defaults to False. Allow users to access their data with Exchange ActiveSync (EAS).
+
+== Folder sharing and export
+
+These three settings are *disable lists*: a module present in the list means the feature is *disabled* for this module.
+Each value is one of `mail`, `calendar`, `contact`.
+
+[IMPORTANT]
+====
+By default, all three lists contain every module, meaning that export and sharing are disabled for everyone.
+Remove a module from a list to enable the feature for it. E.g. `SOGO_D_FOLDER_DISABLE_SHARING = []` allows users to share mail folders, calendars and address books.
+====
+
+* *SOGO_D_FOLDER_DISABLE_SHARING*: a list of strings, defaults to `['mail', 'calendar', 'contact']`. Users cannot share the folders of the listed modules:
+the "Sharing" action is hidden and SOGo refuses any share request.
+* *SOGO_D_FOLDER_DISABLE_SHARING_ANY_AUTH*: a list of strings, defaults to `['mail', 'calendar', 'contact']`. Users cannot share the folders of the listed modules
+with "any authenticated user" (everybody who can log in to SOGo). Sharing with specific users is still possible if allowed by `SOGO_D_FOLDER_DISABLE_SHARING`.
+* *SOGO_D_FOLDER_DISABLE_EXPORT* *(UI only)*: a list of strings, defaults to `['mail', 'calendar', 'contact']`. Users cannot export the folders of the listed modules.
+
+[WARNING]
+====
+For now, `SOGO_D_FOLDER_DISABLE_EXPORT` only has an effect on mail folders (the "Export" action of the folder menu). Address book export does not check it yet,
+and calendar export is not available yet.
+====
+
+== Autocompletion
+
+* *SOGO_D_AUTOCOMPLETION_MIN_LEN*: integer greater than or equal to 2, defaults to 3. Number of characters a user must type before SOGo searches the User Sources and
+address books for suggestions (mail recipients, event attendees, sharing...). With the default value, the search starts at the third character.
+
+[NOTE]
+====
+Each search is a query to your User Sources (LDAP or database). A low value means more and broader queries.
+====
+
+== API rate limit
+
+(NOT IMPLEMENTED)
+
+You will be able to block users who make too many requests to the SOGo API: if a user makes more than A requests during B seconds,
+the user will be blocked for C seconds.
+
+* *SOGO_D_API_MAX_REQUEST* (NOT IMPLEMENTED): integer, defaults to 0. Maximum number of requests (A) during `SOGO_D_API_MAX_REQUEST_INTERVAL`. 0 means no limit.
+* *SOGO_D_API_MAX_REQUEST_INTERVAL* (NOT IMPLEMENTED): integer greater than or equal to 10, defaults to 30. The time span (B), in seconds.
+* *SOGO_D_API_MAX_REQUEST_BLOCK_INTERVAL* (NOT IMPLEMENTED): integer greater than or equal to 5, defaults to 300 (5 minutes). How long the user is blocked (C), in seconds.
+
+[CAUTION]
+====
+The web interface naturally makes many requests. This limit is meant to stop bots or abusive clients, not normal users: use values around 100 requests, not 10.
+====
+
+== Identities
+
+An identity is what a user sends a mail as: a sender name, a "From" address, a "Reply-To" address and a signature.
+Every user has at least one identity, built from their User Source (common name and main mail).
+
+* *SOGO_D_IDENTITIES_ENABLED*: boolean, defaults to False. Allow users to create several identities and choose one when writing a mail.
+If False, users only have their default identity.
+
+The three following settings are only used if `SOGO_D_IDENTITIES_ENABLED` is True. When one of them is False, the corresponding field of the identities
+is locked to the value from the User Source:
+
+* *SOGO_D_IDENTITIES_CUSTOM_FROM_ENABLED*: boolean, defaults to False. Allow users to set any "From" address in their identities. If False, the "From" is the user's main mail.
+* *SOGO_D_IDENTITIES_CUSTOM_NAME_ENABLED*: boolean, defaults to False. Allow users to set any sender name. If False, the name is the user's common name.
+* *SOGO_D_IDENTITIES_CUSTOM_REPLY_TO_ENABLED*: boolean, defaults to False. Allow users to set any "Reply-To" address. If False, it is the user's main mail.
+
+[WARNING]
+====
+With `SOGO_D_IDENTITIES_CUSTOM_FROM_ENABLED`, a user can write any address as sender. SOGo does not check that the user owns this address
+(see `SOGO_D_MAIL_CHECK_FROM` in the Mail Settings, not implemented yet). If you allow it, make sure your outgoing mail server (SMTP) enforces your own sender policy.
+
+Mail aliases (see `US_MAIL` in the User Sources) do not need this setting: users can always send as one of their aliases.
+====
+
+* *SOGO_D_SIGNATURE_SIZE_LIMIT*: integer, defaults to 200. Maximum size of a signature, in kilobytes (KB). 0 means no limit.
+A signature can contain images, which are stored inside it, hence the limit.
+
+== External mail accounts
+
+* *SOGO_D_ALLOW_EXT_MAIL_ACCOUNT*: boolean, defaults to False. Allow users to add mail accounts from other mail servers (another IMAP/SMTP provider) and read them in SOGo.
+If False, users only see their main mail account and SOGo refuses any action on external accounts.
+
+== Webmail
+
+* *SOGO_D_ALLOW_EXT_AVATAR* (NOT IMPLEMENTED): boolean, defaults to True. Allow the webmail to load contact pictures from external services.
+
+=== Junk mail
+
+(NOT IMPLEMENTED)
+
+What SOGo does when a user marks a mail as junk (spam) or as not junk (ham). It is meant to feed the learning of your anti-spam.
+
+* *SOGO_D_MAIL_JUNK_SETTINGS* (NOT IMPLEMENTED): a string, one of:
+** `None`: nothing more than moving the mail
+** `mail`: a copy of the mail is sent to an address, see below
+* *SOGO_D_MAIL_JUNK_MAIL_SPAM* (NOT IMPLEMENTED): a mail address, only if `SOGO_D_MAIL_JUNK_SETTINGS` is `mail`. Mails marked as junk are sent to this address.
+* *SOGO_D_MAIL_JUNK_MAIL_HAM* (NOT IMPLEMENTED): a mail address, only if `SOGO_D_MAIL_JUNK_SETTINGS` is `mail`. Mails marked as not junk are sent to this address.
